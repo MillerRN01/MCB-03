@@ -1,0 +1,229 @@
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #3498db;
+    --text-color: #2c3e50;
+    --sidebar-width: 280px;
+    --navbar-height: 60px;
+    --transition-speed: 0.3s;
+    --hover-bg: #f8f9fa;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f5f6fa;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* Navbar Styling */
+.navbar {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    height: var(--navbar-height);
+    padding: 0 1.5rem;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1030;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: white !important;
+    letter-spacing: 0.5px;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    height: 100vh;
+    width: var(--sidebar-width);
+    position: fixed;
+    top: 0;
+    left: -280px;
+    background-color: white;
+    transition: all var(--transition-speed) ease-in-out;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    z-index: 1040;
+    padding-top: calc(var(--navbar-height) + 20px);
+}
+
+.sidebar.active {
+    left: 0;
+}
+
+/* User Card Styling */
+.card {
+    background: white;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: transform var(--transition-speed);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card img.rounded-circle {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border: 3px solid var(--accent-color);
+    padding: 3px;
+    box-shadow: 0 3px 10px rgba(52, 152, 219, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.card img.rounded-circle:hover {
+    transform: scale(1.1);
+}
+
+.card-title {
+    color: var(--text-color);
+    font-weight: 600;
+    margin: 1rem 0 0.5rem;
+}
+
+.card-text {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Sidebar Headers and Lists */
+.sidebar-header {
+    margin: 1.5rem 0 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 2px solid #eef2f7;
+}
+
+.sidebar-header h5 {
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sidebar-list {
+    padding: 0;
+    margin: 0 0 1.5rem 0;
+}
+
+.sidebar-list li {
+    margin: 0.2rem 0;
+}
+
+.sidebar-list a {
+    color: var(--text-color);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    transition: all var(--transition-speed);
+    gap: 0.8rem;
+}
+
+.sidebar-list a:hover {
+    background-color: var(--hover-bg);
+    color: var(--accent-color);
+    transform: translateX(5px);
+}
+
+.sidebar-list i {
+    font-size: 1.1rem;
+    min-width: 24px;
+}
+
+/* Custom Scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 3px;
+}
+
+/* Menu Toggle Button */
+#menuToggle {
+    background: transparent;
+    border: none;
+    padding: 0.5rem;
+    color: white;
+    transition: transform 0.3s ease;
+}
+
+#menuToggle:hover {
+    transform: scale(1.1);
+}
+
+#menuToggle:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        left: -100%;
+    }
+    
+    .navbar {
+        padding: 0 1rem;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (min-width: 992px) {
+    .sidebar {
+        left: 0;
+    }
+    
+    #menuToggle {
+        display: none;
+    }
+    
+    body {
+        padding-left: var(--sidebar-width);
+    }
+    
+    .navbar {
+        padding-left: calc(var(--sidebar-width) + 1.5rem);
+    }
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.sidebar-list li {
+    animation: slideIn 0.3s ease forwards;
+    animation-delay: calc(var(--item-index) * 0.1s);
+}

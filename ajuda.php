@@ -1,279 +1,105 @@
 <?php
-require_once 'conexao.php';
-session_start();
+include_once 'conexao.php'; // Inclua sua conexão com o banco de dados
+session_start(); // Inicia a sessão
 
-// Configurações de segurança para a sessão
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_only_cookies', 1);
-ini_set('session.cookie_secure', 1);
-
-// Headers de segurança
-header("X-Frame-Options: DENY");
-header("X-XSS-Protection: 1; mode=block");
-header("X-Content-Type-Options: nosniff");
-header("Content-Security-Policy: default-src 'self' https://cdn.jsdelivr.net; img-src 'self' https: data:; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; script-src 'self' https://cdn.jsdelivr.net;");
-
-// Verifica se o usuário está logado e se a sessão não expirou
-if (!isset($_SESSION['usuario']) || !isset($_SESSION['last_activity'])) {
-    header("Location: index.php");
+// Verifica se o usuário está logado
+if (!isset($_SESSION['usuario'])) {
+    header("Location: index.php"); // Redireciona para a página de index se não estiver logado
     exit();
 }
+$dante = $_SESSION['dante'];  // Pode ser 'admin' ou 'funcionario'
 
-// Verifica se a sessão expirou (30 minutos de inatividade)
-if (time() - $_SESSION['last_activity'] > 1800) {
-    session_unset();
-    session_destroy();
-    header("Location: index.php?expired=1");
-    exit();
-}
-
-// Atualiza o timestamp da última atividade
-$_SESSION['last_activity'] = time();
-
-// Sanitiza os dados da sessão
-$dante = htmlspecialchars($_SESSION['dante']);
-$usuario = htmlspecialchars($_SESSION['usuario']);
-$foto = htmlspecialchars($_SESSION['foto']);
-$email = htmlspecialchars($_SESSION['email']);
-
-// Array com as seções de ajuda
-$help_sections = [
-    'inicio' => [
-        'title' => 'Primeiros Passos',
-        'content' => [
-            'Como começar' => 'Guia básico para iniciar o uso do sistema.',
-            'Navegação' => 'Aprenda a navegar pelo menu e suas funcionalidades.',
-            'Configuração inicial' => 'Configure seu perfil e preferências do sistema.'
-        ]
-    ],
-    'cadastros' => [
-        'title' => 'Cadastros',
-        'content' => [
-            'Produtos' => 'Como cadastrar e gerenciar produtos.',
-            'Clientes' => 'Gerenciamento de cadastro de clientes.',
-            'Fornecedores' => 'Como cadastrar e gerenciar fornecedores.',
-            'Categorias' => 'Organização de produtos por categorias.'
-        ]
-    ],
-    'gestao' => [
-        'title' => 'Gestão',
-        'content' => [
-            'Vendas' => 'Como realizar e consultar vendas.',
-            'Estoque' => 'Controle e gestão de estoque.',
-            'Financeiro' => 'Gestão financeira e relatórios.',
-            'Funcionários' => 'Gerenciamento de equipe.'
-        ]
-    ]
-];
+// Obtém os dados da sessão
+$usuario = $_SESSION['usuario'];
+$foto = $_SESSION['foto'];
+$email = $_SESSION['email'];
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Central de Ajuda - MeuComerciodeBolso">
-    <title>Ajuda - MeuComerciodeBolso</title>
+    <title>MeuComerciodeBolso</title>
     <link rel="shortcut icon" href="uploades/fotos/icone.png" type="image/x-icon">
     <link rel="stylesheet" href="global.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
-    
-    <style>
-        .help-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .help-section {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-            padding: 1.5rem;
-            transition: transform 0.2s;
-        }
-
-        .help-section:hover {
-            transform: translateY(-2px);
-        }
-
-        .help-title {
-            color: #0d6efd;
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .help-item {
-            padding: 1rem;
-            border-bottom: 1px solid #e9ecef;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .help-item:last-child {
-            border-bottom: none;
-        }
-
-        .help-item:hover {
-            background-color: #f8f9fa;
-        }
-
-        .help-item i {
-            margin-right: 0.5rem;
-            color: #0d6efd;
-        }
-
-        .search-box {
-            margin-bottom: 2rem;
-        }
-
-        .contact-support {
-            text-align: center;
-            margin-top: 3rem;
-            padding: 1rem;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        /* Estilos do sidebar herdados do home.php */
-        .sidebar {
-            transition: transform 0.3s ease-in-out;
-            position: fixed;
-            top: 56px;
-            left: -250px;
-            width: 250px;
-            height: calc(100vh - 56px);
-            background-color: #f8f9fa;
-            overflow-y: auto;
-            z-index: 1000;
-        }
-
-        .sidebar.active {
-            transform: translateX(250px);
-        }
-
-        .navbar {
-            background-color: #0d6efd;
-        }
-
-        @media (max-width: 768px) {
-            .help-container {
-                margin-top: 1rem;
-            }
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <!-- Navbar -->
+
+    <!-- Navbar com o ícone de menu e o nome ao lado -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <button class="navbar-toggler border-0" type="button" id="menuToggle" aria-label="Toggle navigation">
-                <i class="bi bi-list text-white fs-2"></i>
-            </button>
-            <span class="navbar-brand ms-2">Central de Ajuda</span>
+            <button class="navbar-toggler" type="button" id="menuToggle"><i class="bi bi-list text-white fs-2"></i></button>
+            <span class="navbar-brand ms-2">MeuComerciodeBolso</span>
         </div>
     </nav>
 
-    <!-- Sidebar (mesmo do home.php) -->
-    <?php include 'includes/sidebar.php'; ?>
-
-    <!-- Conteúdo da Ajuda -->
-    <div class="help-container">
-        <!-- Barra de Pesquisa -->
-        <div class="search-box">
-            <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control" id="searchHelp" placeholder="Pesquisar na ajuda...">
+    <!-- Menu Lateral -->
+    <div class="sidebar p-3" id="sidebar">
+        <div class="card mb-3" style="width: 100%;">
+            <div class="card-body text-center">
+                <img src="<?php echo $foto ? $foto : 'https://via.placeholder.com/100'; ?>"
+                    class="card-img-top rounded-circle mb-2"
+                    alt="Foto do Usuário"
+                    style="width: 80px; height: 80px; object-fit: cover;">
+                <h5 class="card-title"><?php echo htmlspecialchars($usuario); ?></h5><!-- Nome do meliante -->
+                <p class="card-text"><?php echo htmlspecialchars($email); ?></p><!-- Email do meliante -->
             </div>
         </div>
-
-        <!-- Seções de Ajuda -->
-        <?php foreach ($help_sections as $section => $data): ?>
-            <div class="help-section">
-                <h2 class="help-title">
-                    <i class="bi bi-book"></i> <?php echo htmlspecialchars($data['title']); ?>
-                </h2>
-                <?php foreach ($data['content'] as $title => $description): ?>
-                    <div class="help-item" data-bs-toggle="collapse" data-bs-target="#<?php echo $section . '-' . str_replace(' ', '', $title); ?>">
-                        <i class="bi bi-chevron-right"></i>
-                        <strong><?php echo htmlspecialchars($title); ?></strong>
-                        <div class="collapse" id="<?php echo $section . '-' . str_replace(' ', '', $title); ?>">
-                            <div class="mt-2">
-                                <?php echo htmlspecialchars($description); ?>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endforeach; ?>
-
-        <!-- Contato com Suporte -->
-        <div class="contact-support">
-            <h3><i class="bi bi-headset"></i> Precisa de mais ajuda?</h3>
-            <p>Nossa equipe de suporte está disponível para ajudar</p>
-            <a href="mailto:suporte@meucommerciodebolso.com" class="btn btn-primary">
-                <i class="bi bi-envelope"></i> Contatar Suporte
-            </a>
+        <!-- Seção Cadastro -->
+        <div class="sidebar-header">
+            <h5 class="mb-0"><i class="bi bi-person"></i> Cadastro</h5>
         </div>
+        <ul class="sidebar-list list-unstyled">
+            <li><a href="categoria.php"><i class="bi bi-list"></i> Categoria</a></li>
+            <li><a href="cadastro_produto.php"><i class="bi bi-box"></i> Produtos e Serviços</a></li>
+            <li><a href="modificador.php"><i class="bi bi-pencil-square"></i> Modificador</a></li>
+            <li><a href="cadastro_cliente.php"><i class="bi bi-person-check"></i> Clientes</a></li>
+            <li><a href="cadastro_fornecedores.php"><i class="bi bi-truck"></i> Fornecedor</a></li>
+            <li><a href="vendedores.php"><i class="bi bi-person-badge"></i> Vendedores</a></li>
+        </ul>
+
+        <!-- Seção Gestão (adm) -->
+        <?php if ($dante === 'admin'): ?>
+            <div class="sidebar-header">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Gestão</h5>
+            </div>
+            <ul class="sidebar-list list-unstyled">
+                <li><a href="consulta_vendas.php"><i class="bi bi-search"></i> Consulta Vendas</a></li>
+                <li><a href="estoque.php"><i class="bi bi-box"></i> Consultar estoque</a></li>
+                <li><a href="caixa.php"><i class="bi bi-cash-stack"></i> Controle de caixa</a></li>
+                <li><a href="fiado.php"><i class="bi bi-credit-card"></i> Fiado</a></li>
+                <li><a href="cadastro_funcionario.php"><i class="bi bi-person-badge"></i>Cadastro de Funcionario</a></li>
+                <li><a href="financeiro.php"><i class="bi bi-wallet"></i> Financeiro</a></li>
+            </ul>
+        <?php endif; ?>
+        <?php if ($dante === 'admin'): ?>
+            <!-- Seção Relatório -->
+            <div class="sidebar-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Relatório</h5>
+            </div>
+            <ul class="sidebar-list list-unstyled">
+                <li><a href="relatorios.php"><i class="bi bi-bar-chart"></i> Relatórios</a></li>
+                <li><a href="relatorios_consolidados.php"><i class="bi bi-pie-chart"></i> Relatórios consolidados</a></li>
+            </ul>
+        <?php endif; ?>
+
+        <!-- Seção Configuração -->
+        <div class="sidebar-header">
+            <h5 class="mb-0"><i class="bi bi-gear"></i> Preferencias</h5>
+        </div>
+        <ul class="sidebar-list list-unstyled">
+            <li><a href="configuracoes.php"><i class="bi bi-gear"></i> Configurações</a></li>
+            <li><a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+        </ul>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Funcionalidade de pesquisa
-            const searchInput = document.getElementById('searchHelp');
-            const helpItems = document.querySelectorAll('.help-item');
-
-            searchInput.addEventListener('input', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-
-                helpItems.forEach(item => {
-                    const text = item.textContent.toLowerCase();
-                    if (text.includes(searchTerm)) {
-                        item.style.display = 'block';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            });
-
-            // Toggle do menu lateral
-            const menuToggle = document.getElementById('menuToggle');
-            const sidebar = document.getElementById('sidebar');
-
-            menuToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('active');
-            });
-
-            // Fechar menu ao clicar fora
-            document.addEventListener('click', function(event) {
-                if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
-                    sidebar.classList.remove('active');
-                }
-            });
-
-            // Detectar inatividade
-            let inactivityTimer;
-            function resetInactivityTimer() {
-                clearTimeout(inactivityTimer);
-                inactivityTimer = setTimeout(() => {
-                    alert('Sua sessão irá expirar em 1 minuto por inatividade.');
-                    setTimeout(() => {
-                        window.location.href = 'logout.php';
-                    }, 60000);
-                }, 1740000); // 29 minutos
-            }
-
-            ['mousemove', 'keypress', 'click', 'touchstart'].forEach(event => {
-                document.addEventListener(event, resetInactivityTimer);
-            });
-            
-            resetInactivityTimer();
-        });
-    </script>
+<script src="global.js"></script>
 </body>
+
 </html>
